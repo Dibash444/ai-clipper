@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI YouTube Shorts Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --color-ink: #111111;
+            --color-canvas: #ffffff;
+            --color-soft-cloud: #f5f5f5;
+            --color-hairline: #cacacb;
+            --color-sale: #d30005;
+            --color-success: #007d48;
+            --color-mute: #707072;
+            --color-charcoal: #39393b;
+            
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 18px;
+            --spacing-xl: 24px;
+            --spacing-section: 48px;
+
+            --rounded-none: 0px;
+            --rounded-md: 24px;
+            --rounded-full: 9999px;
+        }
+
+        body {
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--color-canvas);
+            color: var(--color-ink);
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Editorial Campaign Tile (Hero) */
+        .campaign-tile {
+            background: var(--color-ink);
+            color: var(--color-canvas);
+            padding: 80px var(--spacing-section);
+            margin-bottom: var(--spacing-section);
+            position: relative;
+        }
+
+        .campaign-headline {
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 96px;
+            line-height: 0.9;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1024px) { .campaign-headline { font-size: 64px; } }
+        @media (max-width: 600px) { .campaign-headline { font-size: 48px; } }
+
+        /* Container */
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-section);
+        }
+        @media (max-width: 1024px) { .container { padding: 0 var(--spacing-xl); } }
+
+        /* Form */
+        .form-section {
+            max-width: 600px;
+            margin-bottom: var(--spacing-section);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--color-ink);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* Search-pill style inputs */
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px 16px;
+            height: 40px;
+            background: var(--color-soft-cloud);
+            border: 2px solid transparent;
+            border-radius: var(--rounded-md);
+            color: var(--color-ink);
+            font-family: inherit;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s;
+            appearance: none;
+        }
+
+        input[type="text"]:focus, select:focus {
+            background: var(--color-canvas);
+            border-color: var(--color-ink);
+            box-shadow: 0 0 0 12px var(--color-soft-cloud);
+        }
+        
+        select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23111111' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        /* Primary Button */
+        .btn-generate {
+            display: inline-block;
+            background: var(--color-ink);
+            color: var(--color-canvas);
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 0 32px;
+            height: 48px;
+            border: none;
+            border-radius: var(--rounded-full);
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.1s;
+            width: 100%;
+        }
+
+        .btn-generate:active:not(:disabled) {
+            transform: scale(0.95);
+            opacity: 0.5;
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Status Row */
+        .status-area {
+            display: none;
+            margin-bottom: var(--spacing-section);
+            border-top: 1px solid var(--color-hairline);
+            border-bottom: 1px solid var(--color-hairline);
+            padding: var(--spacing-xl) 0;
+        }
+
+        .status-area.visible {
+            display: block;
+        }
+
+        .status-text {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--color-ink);
+        }
+        .status-text.error {
+            color: var(--color-sale);
+        }
+        .status-text.success {
+            color: var(--color-success);
+        }
+
+        /* Results Area */
+        .results-area {
+            display: none;
+            margin-bottom: var(--spacing-section);
+        }
+        .results-area.visible {
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--color-ink);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--spacing-section) var(--spacing-sm);
+        }
+
+        /* Product Card */
+        .clip-card {
+            background: var(--color-canvas);
+            border-radius: var(--rounded-none);
+        }
+
+        .clip-video {
+            width: 100%;
+            background: var(--color-soft-cloud);
+            border-radius: var(--rounded-none);
+            display: block;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .clip-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--color-ink);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .clip-meta {
+            font-size: 14px;
+            color: var(--color-mute);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* Secondary Button */
+        .btn-secondary {
+            display: inline-block;
+            background: var(--color-soft-cloud);
+            color: var(--color-ink);
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 0 32px;
+            line-height: 48px;
+            height: 48px;
+            border: none;
+            border-radius: var(--rounded-full);
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--color-hairline);
+            padding: var(--spacing-xl) var(--spacing-section);
+            font-size: 14px;
+            color: var(--color-mute);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="campaign-tile">
+        <h1 class="campaign-headline">AI YOUTUBE<br>SHORTS GENERATOR</h1>
+        <p style="font-size: 16px;">Paste a YouTube link, get viral-ready short clips in minutes.</p>
+    </div>
+
+    <div class="container">
+        <!-- Form -->
+        <div class="form-section">
+            <div class="form-group">
+                <label for="youtube-url">YouTube Video URL</label>
+                <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
+            </div>
+            
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="num-clips">Number of Clips</label>
+                    <select id="num-clips">
+                        <option value="1">1 clip</option>
+                        <option value="2">2 clips</option>
+                        <option value="3" selected>3 clips</option>
+                        <option value="4">4 clips</option>
+                        <option value="5">5 clips</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 2;">
+                    <label for="crop-mode">Framing Style</label>
+                    <select id="crop-mode">
+                        <option value="face_track" selected>Face Tracking (OpenCV Centre)</option>
+                        <option value="full">Whole Video (Blurred Background Pad)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="smart-fetch" checked style="width: auto; height: auto; margin: 0; cursor: pointer;">
+                <label for="smart-fetch" style="margin: 0; cursor: pointer;"><strong>⚡ Ultra-Fast Mode (Smart Fetch)</strong> — Downloads only selected highlight clips (~15-30s total)</label>
+            </div>
+
+            <button class="btn-generate" id="btn-generate" onclick="startGeneration()">
+                GENERATE SHORTS
+            </button>
+        </div>
+
+        <!-- Status -->
+        <div class="status-area" id="status-area">
+            <div class="status-text" id="status-text">STARTING...</div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-area" id="results-area">
+            <h2 class="section-title">GENERATED CLIPS</h2>
+            <div class="results-grid" id="results-list"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Powered by AI-Youtube-Shorts-Generator — running locally on your machine.
+    </div>
+
+    <script>
+        let currentJobId = null;
+        let pollInterval = null;
+
+        function startGeneration() {
+            const url = document.getElementById('youtube-url').value.trim();
+            const numClips = document.getElementById('num-clips').value;
+            const cropMode = document.getElementById('crop-mode').value;
+            const smartFetch = document.getElementById('smart-fetch').checked;
+            const btn = document.getElementById('btn-generate');
+
+            if (!url) {
+                alert('Please paste a YouTube video URL first.');
+                return;
+            }
+
+            // Reset UI
+            btn.disabled = true;
+            btn.textContent = 'PROCESSING...';
+            document.getElementById('status-area').classList.add('visible');
+            document.getElementById('results-area').classList.remove('visible');
+            document.getElementById('results-list').innerHTML = '';
+            
+            const statusText = document.getElementById('status-text');
+            statusText.className = 'status-text';
+            statusText.textContent = 'STARTING...';
+
+            fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    url: url, 
+                    num_clips: parseInt(numClips), 
+                    crop_mode: cropMode,
+                    smart_fetch: smartFetch
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                currentJobId = data.job_id;
+                pollInterval = setInterval(pollStatus, 2000);
+            })
+            .catch(err => {
+                showError('Failed to connect to server: ' + err.message);
+            });
+        }
+
+        function pollStatus() {
+            if (!currentJobId) return;
+
+            fetch('/status/' + currentJobId)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('status-text').textContent = (data.message || 'WORKING...').toUpperCase();
+
+                if (data.status === 'done') {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                    showDone(data);
+                } else if (data.status === 'error') {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                    showError(data.message || data.error);
+                }
+            })
+            .catch(() => {});
+        }
+
+        function showDone(data) {
+            const btn = document.getElementById('btn-generate');
+            btn.disabled = false;
+            btn.textContent = 'GENERATE SHORTS';
+
+            const statusText = document.getElementById('status-text');
+            statusText.className = 'status-text success';
+            statusText.textContent = data.message.toUpperCase();
+
+            const clips = data.result || [];
+            if (clips.length === 0) {
+                statusText.textContent = 'NO CLIPS WERE GENERATED.';
+                return;
+            }
+
+            const resultsArea = document.getElementById('results-area');
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = '';
+
+            clips.forEach((clip, i) => {
+                const card = document.createElement('div');
+                card.className = 'clip-card';
+
+                if (clip.error) {
+                    card.innerHTML = `<div style="color:var(--color-sale); margin-bottom:12px;">Clip ${i+1} failed: ${escapeHtml(clip.error)}</div>`;
+                } else {
+                    card.innerHTML = `
+                        <video class="clip-video" controls preload="metadata">
+                            <source src="/output/${encodeURIComponent(clip.filename)}" type="video/mp4">
+                        </video>
+                        <div class="clip-title">${escapeHtml(clip.title)}</div>
+                        <div class="clip-meta">Score: ${clip.score}/100</div>
+                        <div class="clip-meta">"${escapeHtml(clip.hook_sentence)}"</div>
+                        <a class="btn-secondary" href="/output/${encodeURIComponent(clip.filename)}" download>
+                            Download
+                        </a>
+                    `;
+                }
+                resultsList.appendChild(card);
+            });
+
+            resultsArea.classList.add('visible');
+        }
+
+        function showError(msg) {
+            const btn = document.getElementById('btn-generate');
+            btn.disabled = false;
+            btn.textContent = 'GENERATE SHORTS';
+
+            const statusText = document.getElementById('status-text');
+            statusText.className = 'status-text error';
+            statusText.textContent = msg.toUpperCase();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('youtube-url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') startGeneration();
+        });
+    </script>
+</body>
+</html>
