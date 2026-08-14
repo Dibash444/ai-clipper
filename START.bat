@@ -7,6 +7,6 @@ echo   Starting web server...
 echo ======================================================
 echo.
 cd /d "%~dp0"
-start "" http://localhost:5000
+start "" http://localhost:7860
 python app.py
 pause
