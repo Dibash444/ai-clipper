@@ -118,14 +118,19 @@ def fetch_youtube_captions(video_url: str, language: Optional[str] = None) -> Op
         return None
 
     try:
-        print(f"[transcribe/youtube] checking native captions for {video_url}...", flush=True)
+        from .downloader import _get_cookie_file
         ydl_opts = {
             "skip_download": True,
             "writesubtitles": True,
             "writeautomaticsub": True,
+            "extractor_args": {"youtube": {"player_client": ["android_vr", "android", "ios", "mweb", "web"]}},
             "quiet": True,
             "no_warnings": True,
         }
+        cookie_file = _get_cookie_file()
+        if cookie_file:
+            ydl_opts["cookiefile"] = cookie_file
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=False)
             if not info:

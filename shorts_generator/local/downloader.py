@@ -94,6 +94,20 @@ def _existing_download(out_dir: str, video_id: str) -> Optional[str]:
     return None
 
 
+def _get_cookie_file() -> Optional[str]:
+    """Return path to cookies file if present in filesystem or env var."""
+    if os.path.exists("cookies.txt") and os.path.getsize("cookies.txt") > 0:
+        return "cookies.txt"
+    cookie_env = os.getenv("YOUTUBE_COOKIES_TEXT", "") or os.getenv("YOUTUBE_COOKIES", "")
+    if cookie_env.strip():
+        c_path = os.path.join(LOCAL_OUTPUT_DIR, "yt_cookies.txt")
+        os.makedirs(LOCAL_OUTPUT_DIR, exist_ok=True)
+        with open(c_path, "w", encoding="utf-8") as f:
+            f.write(cookie_env.strip())
+        return c_path
+    return None
+
+
 def download_youtube_local(video_url: str, fmt: str = "720", out_dir: Optional[str] = None, audio_only: bool = False) -> str:
     """Download a remote URL or return a local file path unchanged."""
     local_path = _resolve_local_path(video_url)
@@ -114,15 +128,19 @@ def download_youtube_local(video_url: str, fmt: str = "720", out_dir: Optional[s
 
     ext_suffix = ".m4a" if audio_only else ".%(ext)s"
     print(f"[download/local] {video_url} @ {'audio' if audio_only else fmt+'p'} -> {out_dir}/", flush=True)
+    
     ydl_opts = {
         "format": _format_for(fmt, audio_only=audio_only),
         "outtmpl": os.path.join(out_dir, f"source_%(id)s{ext_suffix}"),
         "merge_output_format": None if audio_only else "mp4",
-        "extractor_args": {"youtube": {"player_client": ["android", "ios", "web"]}},
+        "extractor_args": {"youtube": {"player_client": ["android_vr", "android", "ios", "mweb", "web"]}},
         "quiet": True,
         "no_warnings": True,
         "noprogress": True,
     }
+    cookie_file = _get_cookie_file()
+    if cookie_file:
+        ydl_opts["cookiefile"] = cookie_file
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=True)
