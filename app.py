@@ -12,6 +12,12 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+try:
+    import static_ffmpeg  # type: ignore
+    static_ffmpeg.add_paths()
+except Exception:
+    pass
+
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
